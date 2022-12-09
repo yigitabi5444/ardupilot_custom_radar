@@ -49,7 +49,7 @@ bool AP_RangeFinder_VBand::get_reading(float &reading_m)
         }
 
         // read the string until the comma
-        if (b != 44 || b != 13 || b != 10)
+        if (b != 44 && b != 13 && b != 10)
         {
             _stringBuffer[_stringBuffer_index] = b;
             _stringBuffer_index++;
