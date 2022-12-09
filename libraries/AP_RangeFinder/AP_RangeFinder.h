@@ -102,6 +102,7 @@ public:
         USD1_CAN = 33,
         Benewake_CAN = 34,
         TeraRanger_Serial = 35,
+        Vband_Radar = 50,
         SIM = 100,
     };
 
