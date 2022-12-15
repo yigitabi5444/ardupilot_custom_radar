@@ -3,12 +3,6 @@
 #include "AP_RangeFinder.h"
 #include "AP_RangeFinder_Backend_Serial.h"
 
-#ifndef AP_RANGEFINDER_VBAND_ENABLED
-#define AP_RANGEFINDER_VBAND_ENABLED AP_RANGEFINDER_BACKEND_DEFAULT_ENABLED
-#endif
-
-#if AP_RANGEFINDER_VBAND_ENABLED
-
 class AP_RangeFinder_VBand : public AP_RangeFinder_Backend_Serial
 {
 public:
@@ -44,5 +38,3 @@ private:
     uint8_t  _stringBuffer_index, comma_count;
     int16_t BIN, I, Q, J, K;
 };
-
-#endif

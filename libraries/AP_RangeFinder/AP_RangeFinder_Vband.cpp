@@ -1,9 +1,6 @@
 #include "AP_RangeFinder_Vband.h"
 
-#if AP_RANGEFINDER_VBAND_ENABLED
-
-#define CONFIDENCE_MIN 1000
-#define CONFIDENCE_MAX 1000000000000
+#define CONFIDENCE_MIN 36000000
 #define DISTANCE_MIN 0
 #define DISTANCE_MAX 1000
 
@@ -88,7 +85,7 @@ bool AP_RangeFinder_VBand::get_reading(float &reading_m)
             float v_confidence = (I * I) + (Q * Q) + (J * J) + (K * K);
             float v_distance = BIN * 0.25f;
 
-            if (v_confidence > CONFIDENCE_MIN && v_confidence < CONFIDENCE_MAX && v_distance > DISTANCE_MIN && v_distance < DISTANCE_MAX)
+            if (v_confidence > CONFIDENCE_MIN && v_distance > DISTANCE_MIN && v_distance < DISTANCE_MAX)
             {
                 reading_m = v_distance;
                 got_reading = true;
@@ -98,5 +95,3 @@ bool AP_RangeFinder_VBand::get_reading(float &reading_m)
 
     return got_reading;
 }
-
-#endif // AP_RANGEFINDER_VBAND_ENABLED

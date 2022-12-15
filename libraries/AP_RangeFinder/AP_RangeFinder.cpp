@@ -566,9 +566,7 @@ void RangeFinder::detect_instance(uint8_t instance, uint8_t &serial_instance)
         break;
 #endif
     case Type::Vband_Radar:
-#if AP_RANGEFINDER_VBAND_ENABLED
         serial_create_fn = AP_RangeFinder_VBand::create;
-#endif
         break;
     case Type::NONE:
         break;
