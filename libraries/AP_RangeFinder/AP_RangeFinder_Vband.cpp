@@ -62,10 +62,10 @@ bool AP_RangeFinder_VBand::get_reading(float &reading_m)
                     _stringBuffer_index = 0; // prevent buffer overflow
             }
 
-            if (b == 44)//comma
+            if (b == 44) // comma
             {
                 _stringBuffer[_stringBuffer_index] = '\0'; // terminate the string
-                switch (comma_count%4)
+                switch (comma_count % 4)
                 {
                 case 0:
                     I = atoi(_stringBuffer);
