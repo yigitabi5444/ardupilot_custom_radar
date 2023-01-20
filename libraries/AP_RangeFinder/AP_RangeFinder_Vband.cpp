@@ -1,27 +1,8 @@
 #include "AP_RangeFinder_Vband.h"
 
-/*
-V-Band Radar data output sample
-
-Everyting is sent as an ascii string,
-separated by commas, terminated by a newline and a carriage return.
-Format:
-BIN, I, Q ,J, K
-
-Distance = BIN * 25cm
-Confidence (like intensity) = sqrt(I^2+ Q^2 + J^2 + K^2)
-
-322,-8426,-19048,1596,-2416
-239,-4786,-993,-3576,-2408
-130,-1100,13,-2903,-2396
-411,-1182,-154,-2498,-2321
-142,-674,-533,1602,2317
-413,1617,59,258,-439
-*/
-
 void AP_RangeFinder_VBand::_requestData(void)
 {
-    uart->write(0x59);
+    uart->write('a');
 }
 
 // get_reading
@@ -35,26 +16,12 @@ bool AP_RangeFinder_VBand::get_reading(float &reading_m)
         _requestData();
     }
     else
-        while (nbytes-- > 0)
+        while (nbytes-- > 0) // read and process bytes from uart one by one while data is available
         {
-            char b = uart->read();
+            char b = uart->read(); // Read one byte from the serial port
 
-            // start of the data
-            if (b == 10)
-            {
-                _stringBuffer_index = 0;
-                comma_count = 0;
-                BIN = 8;
-                I = 0;
-                Q = 0;
-                J = 0;
-                K = 0;
-                memset(_confidence, 0, sizeof(_confidence));
-                memset(_stringBuffer, 0, sizeof(_stringBuffer));
-            }
-
-            // read the string
-            if (b != 44 && b != 13 && b != 10)
+            // read the string if it is not a comma or a newline
+            if (b != ',' && b != '\n' && b != '\r')
             {
                 _stringBuffer[_stringBuffer_index] = b;
                 _stringBuffer_index++;
@@ -62,35 +29,56 @@ bool AP_RangeFinder_VBand::get_reading(float &reading_m)
                     _stringBuffer_index = 0; // prevent buffer overflow
             }
 
-            if (b == 44) // comma
+            // if it is a comma, then we have a new value
+            if (b == ',')
             {
-                _stringBuffer[_stringBuffer_index] = '\0'; // terminate the string
+                _stringBuffer[_stringBuffer_index] = '\0'; // terminate the number string
                 switch (comma_count % 4)
                 {
                 case 0:
-                    I = atoi(_stringBuffer);
+                    // if the recieved bin value is smaller than the last one, then we have a new set of data
+                    if (atoi(_stringBuffer) < BIN)
+                    {
+                        // We set the flag to true, so the distance gets calculated from the last compelete set
+                        _set_done = true;
+                    }
+                    BIN = atoi(_stringBuffer);
                     break;
                 case 1:
-                    J = atoi(_stringBuffer);
+                    I = atoi(_stringBuffer);
                     break;
                 case 2:
-                    K = atoi(_stringBuffer);
+                    J = atoi(_stringBuffer);
                     break;
                 case 3:
+                    K = atoi(_stringBuffer);
+                    break;
+                case 4:
                     Q = atoi(_stringBuffer);
-                    if (BIN < 128)
-                    {
-                        _confidence[BIN] = sqrtF((I * I) + (Q * Q) + (J * J) + (K * K));
-                        BIN++;
-                    }
                     break;
                 }
                 _stringBuffer_index = 0;
                 comma_count++;
             }
 
-            // end of the string
-            if (b == 13)
+            if (b == '\n') // end of the line
+            {
+                if (BIN < 128) // Check if BIN is in range
+                {
+                    _confidence[BIN] = sqrtF((I * I) + (Q * Q) + (J * J) + (K * K));
+                }
+
+                // reset the data buffers
+                _stringBuffer_index = 0;
+                comma_count = 0;
+                I = 0;
+                Q = 0;
+                J = 0;
+                K = 0;
+                memset(_stringBuffer, 0, sizeof(_stringBuffer));
+            }
+
+            if (_set_done) // if a complete set of data has been recieved:
             {
                 // find the maximum confidence
                 uint32_t max_confidence = 0;
@@ -103,10 +91,13 @@ bool AP_RangeFinder_VBand::get_reading(float &reading_m)
                     }
                 }
 
-                float v_distance = BIN * 0.25f;
+                float v_distance = BIN * 0.25f; // distance in meters
 
                 reading_m = v_distance;
                 got_reading = true;
+
+                _set_done = false;                           // unset the flag
+                memset(_confidence, 0, sizeof(_confidence)); // reset the confidence array
             }
         }
 

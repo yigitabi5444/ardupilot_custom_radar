@@ -36,6 +36,7 @@ private:
 
     void _requestData(void);
 
+    bool _set_done = false;
     char _stringBuffer[16];
     uint8_t _stringBuffer_index, comma_count;
     uint32_t BIN, I, Q, J, K;
